@@ -1,0 +1,531 @@
+Contributing to elasticsearch
+=============================
+
+Elasticsearch is an open source project and we love to receive contributions from our community — you! There are many ways to contribute, from writing tutorials or blog posts, improving the documentation, submitting bug reports and feature requests or writing code which can be incorporated into Elasticsearch itself.
+
+If you want to be rewarded for your contributions, sign up for the [Elastic Contributor Program](https://www.elastic.co/community/contributor). Each time you
+make a valid contribution, you’ll earn points that increase your chances of winning prizes and being recognized as a top contributor.
+
+Bug reports
+-----------
+
+If you think you have found a bug in Elasticsearch, first make sure that you are testing against the [latest version of Elasticsearch](https://www.elastic.co/downloads/elasticsearch) - your issue may already have been fixed. If not, search our [issues list](https://github.com/elastic/elasticsearch/issues) on GitHub in case a similar issue has already been opened.
+
+It is very helpful if you can prepare a reproduction of the bug. In other words, provide a small test case which we can run to confirm your bug. It makes it easier to find the problem and to fix it. Test cases should be provided as `curl` commands which we can copy and paste into a terminal to run it locally, for example:
+
+```sh
+# delete the index
+curl -XDELETE localhost:9200/test
+
+# insert a document
+curl -XPUT localhost:9200/test/test/1 -d '{
+ "title": "test document"
+}'
+
+# this should return XXXX but instead returns YYY
+curl ....
+```
+
+Provide as much information as you can. You may think that the problem lies with your query, when actually it depends on how your data is indexed. The easier it is for us to recreate your problem, the faster it is likely to be fixed.
+
+Feature requests
+----------------
+
+If you find yourself wishing for a feature that doesn't exist in Elasticsearch, you are probably not alone. There are bound to be others out there with similar needs. Many of the features that Elasticsearch has today have been added because our users saw the need.
+Open an issue on our [issues list](https://github.com/elastic/elasticsearch/issues) on GitHub which describes the feature you would like to see, why you need it, and how it should work.
+
+Contributing code and documentation changes
+-------------------------------------------
+
+If you would like to contribute a new feature or a bug fix to Elasticsearch,
+please discuss your idea first on the Github issue. If there is no Github issue
+for your idea, please open one. It may be that somebody is already working on
+it, or that there are particular complexities that you should know about before
+starting the implementation. There are often a number of ways to fix a problem
+and it is important to find the right approach before spending time on a PR
+that cannot be merged.
+
+We add the `help wanted` label to existing Github issues for which community
+contributions are particularly welcome, and we use the `good first issue` label
+to mark issues that we think will be suitable for new contributors.
+
+The process for contributing to any of the [Elastic repositories](https://github.com/elastic/) is similar. Details for individual projects can be found below.
+
+### Fork and clone the repository
+
+You will need to fork the main Elasticsearch code or documentation repository and clone it to your local machine. See
+[github help page](https://help.github.com/articles/fork-a-repo) for help.
+
+Further instructions for specific projects are given below.
+
+### Submitting your changes
+
+Once your changes and tests are ready to submit for review:
+
+1. Test your changes
+
+    Run the test suite to make sure that nothing is broken. See the
+[TESTING](TESTING.asciidoc) file for help running tests.
+
+2. Sign the Contributor License Agreement
+
+    Please make sure you have signed our [Contributor License Agreement](https://www.elastic.co/contributor-agreement/). We are not asking you to assign copyright to us, but to give us the right to distribute your code without restriction. We ask this of all contributors in order to assure our users of the origin and continuing existence of the code. You only need to sign the CLA once.
+
+3. Rebase your changes
+
+    Update your local repository with the most recent code from the main Elasticsearch repository, and rebase your branch on top of the latest master branch. We prefer your initial changes to be squashed into a single commit. Later, if we ask you to make changes, add them as separate commits.  This makes them easier to review.  As a final step before merging we will either ask you to squash all commits yourself or we'll do it for you.
+
+
+4. Submit a pull request
+
+    Push your local changes to your forked copy of the repository and [submit a pull request](https://help.github.com/articles/using-pull-requests). In the pull request, choose a title which sums up the changes that you have made, and in the body provide more details about what your changes do. Also mention the number of the issue where discussion has taken place, eg "Closes #123".
+
+Then sit back and wait. There will probably be discussion about the pull request and, if any changes are needed, we would love to work with you to get your pull request merged into Elasticsearch.
+
+Please adhere to the general guideline that you should never force push
+to a publicly shared branch. Once you have opened your pull request, you
+should consider your branch publicly shared. Instead of force pushing
+you can just add incremental commits; this is generally easier on your
+reviewers. If you need to pick up changes from master, you can merge
+master into your branch. A reviewer might ask you to rebase a
+long-running pull request in which case force pushing is okay for that
+request. Note that squashing at the end of the review process should
+also not be done, that can be done when the pull request is [integrated
+via GitHub](https://github.com/blog/2141-squash-your-commits).
+
+Contributing to the Elasticsearch codebase
+------------------------------------------
+
+**Repository:** [https://github.com/elastic/elasticsearch](https://github.com/elastic/elasticsearch)
+
+JDK 14 is required to build Elasticsearch. You must have a JDK 14 installation
+with the environment variable `JAVA_HOME` referencing the path to Java home for
+your JDK 14 installation. By default, tests use the same runtime as `JAVA_HOME`.
+However, since Elasticsearch supports JDK 8, the build supports compiling with
+JDK 14 and testing on a JDK 8 runtime; to do this, set `RUNTIME_JAVA_HOME`
+pointing to the Java home of a JDK 8 installation. Note that this mechanism can
+be used to test against other JDKs as well, this is not only limited to JDK 8.
+
+> Note: It is also required to have `JAVA8_HOME`, `JAVA9_HOME`, `JAVA10_HOME`
+and `JAVA11_HOME`, and `JAVA12_HOME` available so that the tests can pass.
+
+Elasticsearch uses the Gradle wrapper for its build. You can execute Gradle
+using the wrapper via the `gradlew` script on Unix systems or `gradlew.bat`
+script on Windows in the root of the repository. The examples below show the
+usage on Unix.
+
+We support development in IntelliJ versions IntelliJ 2019.2 and
+onwards. We would like to support Eclipse, but few of us use it and has fallen
+into [disrepair][eclipse].
+
+[Docker](https://docs.docker.com/install/) is required for building some Elasticsearch artifacts and executing certain test suites. You can run Elasticsearch without building all the artifacts with:
+
+    ./gradlew :run
+
+That'll spend a while building Elasticsearch and then it'll start Elasticsearch,
+writing its log above Gradle's status message. We log a lot of stuff on startup,
+specifically these lines tell you that Elasticsearch is ready:
+
+    [2020-05-29T14:50:35,167][INFO ][o.e.h.AbstractHttpServerTransport] [runTask-0] publish_address {127.0.0.1:9200}, bound_addresses {[::1]:9200}, {127.0.0.1:9200}
+    [2020-05-29T14:50:35,169][INFO ][o.e.n.Node               ] [runTask-0] started
+
+But to be honest its typically easier to wait until the console stops scrolling
+and then run `curl` in another window like this:
+
+    curl -u elastic:password localhost:9200
+
+
+
+### Importing the project into IntelliJ IDEA
+
+Elasticsearch builds using Java 14. When importing into IntelliJ you will need
+to define an appropriate SDK. The convention is that **this SDK should be named
+"14"** so that the project import will detect it automatically. For more details
+on defining an SDK in IntelliJ please refer to [their documentation](https://www.jetbrains.com/help/idea/sdk.html#define-sdk).
+SDK definitions are global, so you can add the JDK from any project, or after
+project import. Importing with a missing JDK will still work, IntelliJ will
+simply report a problem and will refuse to build until resolved.
+
+You can import the Elasticsearch project into IntelliJ IDEA via:
+
+ - Select **File > Open**
+ - In the subsequent dialog navigate to the root `build.gradle` file
+ - In the subsequent dialog select **Open as Project**
+
+### Java Language Formatting Guidelines
+
+Java files in the Elasticsearch codebase are formatted with the Eclipse JDT
+formatter, using the [Spotless
+Gradle](https://github.com/diffplug/spotless/tree/master/plugin-gradle)
+plugin. This plugin is configured on a project-by-project basis, via
+`build.gradle` in the root of the repository. So long as at least one
+project is configured, the formatting check can be run explicitly with:
+
+    ./gradlew spotlessJavaCheck
+
+The code can be formatted with:
+
+    ./gradlew spotlessApply
+
+These tasks can also be run for specific subprojects, e.g.
+
+    ./gradlew server:spotlessJavaCheck
+
+Please follow these formatting guidelines:
+
+* Java indent is 4 spaces
+* Line width is 140 characters
+* Lines of code surrounded by `// tag::NAME` and `// end::NAME` comments are included
+  in the documentation and should only be 76 characters wide not counting
+  leading indentation. Such regions of code are not formatted automatically as
+  it is not possible to change the line length rule of the formatter for
+  part of a file. Please format such sections sympathetically with the rest
+  of the code, while keeping lines to maximum length of 76 characters.
+* Wildcard imports (`import foo.bar.baz.*`) are forbidden and will cause
+  the build to fail.
+* If *absolutely* necessary, you can disable formatting for regions of code
+  with the `// tag::NAME` and `// end::NAME` directives, but note that
+  these are intended for use in documentation, so please make it clear what
+  you have done, and only do this where the benefit clearly outweighs the
+  decrease in consistency.
+* Note that JavaDoc and block comments i.e. `/* ... */` are not formatted,
+  but line comments i.e `// ...` are.
+* There is an implicit rule that negative boolean expressions should use
+  the form `foo == false` instead of `!foo` for better readability of the
+  code. While this isn't strictly enforced, if might get called out in PR
+  reviews as something to change.
+
+#### Editor / IDE Support
+
+Eclipse IDEs can import the file [elasticsearch.eclipseformat.xml]
+directly.
+
+IntelliJ IDEs can
+[import](https://blog.jetbrains.com/idea/2014/01/intellij-idea-13-importing-code-formatter-settings-from-eclipse/)
+the same settings file, and / or use the [Eclipse Code
+Formatter](https://plugins.jetbrains.com/plugin/6546-eclipse-code-formatter)
+plugin.
+
+You can also tell Spotless to [format a specific
+file](https://github.com/diffplug/spotless/tree/master/plugin-gradle#can-i-apply-spotless-to-specific-files)
+from the command line.
+
+#### Formatting failures
+
+Sometimes Spotless will report a "misbehaving rule which can't make up its
+mind" and will recommend enabling the `paddedCell()` setting. If you
+enabled this settings and run the format check again,
+Spotless will write files to
+`$PROJECT/build/spotless-diagnose-java/` to aid diagnosis. It writes
+different copies of the formatted files, so that you can see how they
+differ and infer what is the problem.
+
+The `paddedCell()` option is disabled for normal operation in order to
+detect any misbehaviour. You can enabled the option from the command line
+by running Gradle with `-Dspotless.paddedcell`.
+
+### License Headers
+
+We require license headers on all Java files. With the exception of the
+top-level `x-pack` directory, all contributed code should have the following
+license header unless instructed otherwise:
+
+    /*
+     * Licensed to Elasticsearch under one or more contributor
+     * license agreements. See the NOTICE file distributed with
+     * this work for additional information regarding copyright
+     * ownership. Elasticsearch licenses this file to you under
+     * the Apache License, Version 2.0 (the "License"); you may
+     * not use this file except in compliance with the License.
+     * You may obtain a copy of the License at
+     *
+     *    http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing,
+     * software distributed under the License is distributed on an
+     * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+     * KIND, either express or implied.  See the License for the
+     * specific language governing permissions and limitations
+     * under the License.
+     */
+
+The top-level `x-pack` directory contains code covered by the [Elastic
+license](licenses/ELASTIC-LICENSE.txt). Community contributions to this code are
+welcome, and should have the following license header unless instructed
+otherwise:
+
+    /*
+     * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
+     * or more contributor license agreements. Licensed under the Elastic License;
+     * you may not use this file except in compliance with the Elastic License.
+     */
+
+It is important that the only code covered by the Elastic licence is contained
+within the top-level `x-pack` directory. The build will fail its pre-commit
+checks if contributed code does not have the appropriate license headers.
+
+> **NOTE:** If you have imported the project into IntelliJ IDEA the project will
+> be automatically configured to add the correct license header to new source
+> files based on the source location.
+
+### Creating A Distribution
+
+Run all build commands from within the root directory:
+
+```sh
+cd elasticsearch/
+```
+
+To build a darwin-tar distribution, run this command:
+
+```sh
+./gradlew -p distribution/archives/darwin-tar assemble
+```
+
+You will find the distribution under:
+`./distribution/archives/darwin-tar/build/distributions/`
+
+To create all build artifacts (e.g., plugins and Javadocs) as well as
+distributions in all formats, run this command:
+
+```sh
+./gradlew assemble
+```
+
+> **NOTE:** Running the task above will fail if you don't have a available
+> Docker installation.
+
+The package distributions (Debian and RPM) can be found under:
+`./distribution/packages/(deb|rpm|oss-deb|oss-rpm)/build/distributions/`
+
+The archive distributions (tar and zip) can be found under:
+`./distribution/archives/(darwin-tar|linux-tar|windows-zip|oss-darwin-tar|oss-linux-tar|oss-windows-zip)/build/distributions/`
+
+### Running The Full Test Suite
+
+Before submitting your changes, run the test suite to make sure that nothing is broken, with:
+
+```sh
+./gradlew check
+```
+
+If your changes affect only the documentation, run:
+
+```sh
+./gradlew -p docs check
+```
+For more information about testing code examples in the documentation, see
+https://github.com/elastic/elasticsearch/blob/master/docs/README.asciidoc
+
+### Project layout
+
+This repository is split into many top level directories. The most important
+ones are:
+
+#### `docs`
+Documentation for the project.
+
+#### `distribution`
+Builds our tar and zip archives and our rpm and deb packages.
+
+#### `libs`
+Libraries used to build other parts of the project. These are meant to be
+internal rather than general purpose. We have no plans to
+[semver](https://semver.org/) their APIs or accept feature requests for them.
+We publish them to maven central because they are dependencies of our plugin
+test framework, high level rest client, and jdbc driver but they really aren't
+general purpose enough to *belong* in maven central. We're still working out
+what to do here.
+
+#### `modules`
+Features that are shipped with Elasticsearch by default but are not built in to
+the server. We typically separate features from the server because they require
+permissions that we don't believe *all* of Elasticsearch should have or because
+they depend on libraries that we don't believe *all* of Elasticsearch should
+depend on.
+
+For example, reindex requires the `connect` permission so it can perform
+reindex-from-remote but we don't believe that the *all* of Elasticsearch should
+have the "connect". For another example, Painless is implemented using antlr4
+and asm and we don't believe that *all* of Elasticsearch should have access to
+them.
+
+#### `plugins`
+Officially supported plugins to Elasticsearch. We decide that a feature should
+be a plugin rather than shipped as a module because we feel that it is only
+important to a subset of users, especially if it requires extra dependencies.
+
+The canonical example of this is the ICU analysis plugin. It is important for
+folks who want the fairly language neutral ICU analyzer but the library to
+implement the analyzer is 11MB so we don't ship it with Elasticsearch by
+default.
+
+Another example is the `discovery-gce` plugin. It is *vital* to folks running
+in [GCP](https://cloud.google.com/) but useless otherwise and it depends on a
+dozen extra jars.
+
+#### `qa`
+Honestly this is kind of in flux and we're not 100% sure where we'll end up.
+Right now the directory contains
+* Tests that require multiple modules or plugins to work
+* Tests that form a cluster made up of multiple versions of Elasticsearch like
+full cluster restart, rolling restarts, and mixed version tests
+* Tests that test the Elasticsearch clients in "interesting" places like the
+`wildfly` project.
+* Tests that test Elasticsearch in funny configurations like with ingest
+disabled
+* Tests that need to do strange things like install plugins that thrown
+uncaught `Throwable`s or add a shutdown hook
+But we're not convinced that all of these things *belong* in the qa directory.
+We're fairly sure that tests that require multiple modules or plugins to work
+should just pick a "home" plugin. We're fairly sure that the multi-version
+tests *do* belong in qa. Beyond that, we're not sure. If you want to add a new
+qa project, open a PR and be ready to discuss options.
+
+#### `server`
+The server component of Elasticsearch that contains all of the modules and
+plugins. Right now things like the high level rest client depend on the server
+but we'd like to fix that in the future.
+
+#### `test`
+Our test framework and test fixtures. We use the test framework for testing the
+server, the plugins, and modules, and pretty much everything else. We publish
+the test framework so folks who develop Elasticsearch plugins can use it to
+test the plugins. The test fixtures are external processes that we start before
+running specific tests that rely on them.
+
+For example, we have an hdfs test that uses mini-hdfs to test our
+repository-hdfs plugin.
+
+#### `x-pack`
+Commercially licensed code that integrates with the rest of Elasticsearch. The
+`docs` subdirectory functions just like the top level `docs` subdirectory and
+the `qa` subdirectory functions just like the top level `qa` subdirectory. The
+`plugin` subdirectory contains the x-pack module which runs inside the
+Elasticsearch process. The `transport-client` subdirectory contains extensions
+to Elasticsearch's standard transport client to work properly with x-pack.
+
+### Gradle Build
+
+We use Gradle to build Elasticsearch because it is flexible enough to not only
+build and package Elasticsearch, but also orchestrate all of the ways that we
+have to test Elasticsearch.
+
+#### Configurations
+
+Gradle organizes dependencies and build artifacts into "configurations" and
+allows you to use these configurations arbitrarily. Here are some of the most
+common configurations in our build and how we use them:
+
+<dl>
+<dt>`implementation`</dt><dd>Dependencies that are used by the project
+at compile and runtime but are not exposed as a compile dependency to other dependent projects.
+Dependencies added to the `implementation` configuration are considered an implementation detail
+that can be changed at a later date without affecting any dependent projects.</dd>
+<dt>`api`</dt><dd>Dependencies that are used as compile and runtime dependencies of a project
+ and are considered part of the external api of the project.
+<dt>`runtimeOnly`</dt><dd>Dependencies that not on the classpath at compile time but
+are on the classpath at runtime. We mostly use this configuration to make sure that
+we do not accidentally compile against dependencies of our dependencies also
+known as "transitive" dependencies".</dd>
+<dt>`compileOnly`</dt><dd>Code that is on the classpath at compile time but that
+should not be shipped with the project because it is "provided" by the runtime
+somehow. Elasticsearch plugins use this configuration to include dependencies
+that are bundled with Elasticsearch's server.</dd>
+<dt>`testImplementation`</dt><dd>Code that is on the classpath for compiling tests
+that are part of this project but not production code. The canonical example
+of this is `junit`.</dd>
+</dl>
+
+
+Reviewing and accepting your contribution
+-----------------------------------------
+
+We review every contribution carefully to ensure that the change is of high
+quality and fits well with the rest of the Elasticsearch codebase. If accepted,
+we will merge your change and usually take care of backporting it to
+appropriate branches ourselves.
+
+We really appreciate everyone who is interested in contributing to
+Elasticsearch and regret that we sometimes have to reject contributions even
+when they might appear to make genuine improvements to the system. Reviewing
+contributions can be a very time-consuming task, yet the team is small and our
+time is very limited. In some cases the time we would need to spend on reviews
+would outweigh the benefits of a change by preventing us from working on other
+more beneficial changes instead.
+
+Please discuss your change in a Github issue before spending much time on its
+implementation. We sometimes have to reject contributions that duplicate other
+efforts, take the wrong approach to solving a problem, or solve a problem which
+does not need solving. An up-front discussion often saves a good deal of wasted
+time in these cases.
+
+We normally immediately reject isolated PRs that only perform simple
+refactorings or otherwise "tidy up" certain aspects of the code. We think the
+benefits of this kind of change are very small, and in our experience it is not
+worth investing the substantial effort needed to review them. This especially
+includes changes suggested by tools.
+
+We sometimes reject contributions due to the low quality of the submission
+since low-quality submissions tend to take unreasonable effort to review
+properly. Quality is rather subjective so it is hard to describe exactly how to
+avoid this, but there are some basic steps you can take to reduce the chances
+of rejection. Follow the guidelines listed above when preparing your changes.
+You should add tests that correspond with your changes, and your PR should pass
+affected test suites too. It makes it much easier to review if your code is
+formatted correctly and does not include unnecessary extra changes.
+
+We sometimes reject contributions if we find ourselves performing many review
+iterations without making enough progress. Some iteration is expected,
+particularly on technically complicated changes, and there's no fixed limit on
+the acceptable number of review cycles since it depends so much on the nature
+of the change. You can help to reduce the number of iterations by reviewing
+your contribution yourself or in your own team before asking us for a review.
+You may be surprised how many comments you can anticipate and address by taking
+a short break and then carefully looking over your changes again.
+
+We expect you to follow up on review comments somewhat promptly, but recognise
+that everyone has many priorities for their time and may not be able to respond
+for several days. We will understand if you find yourself without the time to
+complete your contribution, but please let us know that you have stopped
+working on it. We will try to send you a reminder if we haven't heard from you
+in a while, but may end up closing your PR if you do not respond for too long.
+
+If your contribution is rejected we will close the pull request with a comment
+explaining why. This decision isn't always final: if you feel we have
+misunderstood your intended change or otherwise think that we should reconsider
+then please continue the conversation with a comment on the pull request and
+we'll do our best to address any further points you raise.
+
+Contributing as part of a class
+-------------------------------
+In general Elasticsearch is happy to accept contributions that were created as
+part of a class but strongly advise against making the contribution as part of
+the class. So if you have code you wrote for a class feel free to submit it.
+
+Please, please, please do not assign contributing to Elasticsearch as part of a
+class. If you really want to assign writing code for Elasticsearch as an
+assignment then the code contributions should be made to your private clone and
+opening PRs against the primary Elasticsearch clone must be optional, fully
+voluntary, not for a grade, and without any deadlines.
+
+Because:
+
+* While the code review process is likely very educational, it can take wildly
+varying amounts of time depending on who is available, where the change is, and
+how deep the change is. There is no way to predict how long it will take unless
+we rush.
+* We do not rush reviews without a very, very good reason. Class deadlines
+aren't a good enough reason for us to rush reviews.
+* We deeply discourage opening a PR you don't intend to work through the entire
+code review process because it wastes our time.
+* We don't have the capacity to absorb an entire class full of new contributors,
+especially when they are unlikely to become long time contributors.
+
+Finally, we require that you run `./gradlew check` before submitting a
+non-documentation contribution. This is mentioned above, but it is worth
+repeating in this section because it has come up in this context.
+
+[eclipse]: https://download.eclipse.org/eclipse/downloads/drops4/R-4.13-201909161045/
+[intellij]: https://blog.jetbrains.com/idea/2017/07/intellij-idea-2017-2-is-here-smart-sleek-and-snappy/
+[shadow-plugin]: https://github.com/johnrengelman/shadow
