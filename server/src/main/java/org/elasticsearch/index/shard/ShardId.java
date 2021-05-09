@@ -34,8 +34,8 @@ import java.io.IOException;
  */
 public class ShardId implements Comparable<ShardId>, ToXContentFragment, Writeable {
 
-    private final Index index;
-    private final int shardId;
+    private final Index index; // 分片所属于的索引
+    private final int shardId; // 从0开始的递增的序号
     private final int hashCode;
 
     public ShardId(Index index, int shardId) {

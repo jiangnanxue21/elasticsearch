@@ -81,7 +81,7 @@ dependencies {
   api project(':libs:elasticsearch-x-content')
   api project(":libs:elasticsearch-geo")
 
-  compileOnly project(':libs:elasticsearch-plugin-classloader')
+  compile project(':libs:elasticsearch-plugin-classloader')
   testRuntimeOnly project(':libs:elasticsearch-plugin-classloader')
 
   // lucene

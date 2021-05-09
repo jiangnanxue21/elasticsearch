@@ -782,6 +782,7 @@ public class Node implements Closeable {
             return this;
         }
 
+        // 开始启动各个子模块
         logger.info("starting ...");
         pluginLifecycleComponents.forEach(LifecycleComponent::start);
 
@@ -843,6 +844,7 @@ public class Node implements Closeable {
 
         clusterService.addStateApplier(transportService.getTaskManager());
         // start after transport service so the local disco is known
+        // 集群拓扑管理
         discovery.start(); // start before cluster service so that it can set initial state on ClusterApplierService
         clusterService.start();
         assert clusterService.localNode().equals(localNodeFactory.getNode())

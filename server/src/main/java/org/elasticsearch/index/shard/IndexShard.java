@@ -766,7 +766,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
                                                    SourceToParse sourceToParse) throws IOException {
         assert opPrimaryTerm <= getOperationPrimaryTerm()
                 : "op term [ " + opPrimaryTerm + " ] > shard term [" + getOperationPrimaryTerm() + "]";
-        ensureWriteAllowed(origin);
+        ensureWriteAllowed(origin); //判断方法主要是通过分片状态来判断，对于主分片来说，如果不是STARTED和RELOCATED，那么就不允许写入分片
         Engine.Index operation;
         try {
             final String resolvedType = mapperService.resolveDocumentType(sourceToParse.type());

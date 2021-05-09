@@ -448,6 +448,8 @@ public class TransportBulkAction extends HandledTransportAction<BulkRequest, Bul
         @Override
         protected void doRun() {
             assert bulkRequest != null;
+            // 检查集群状态，如果集群异常则取消写入
+            // Master节点不存在，则等待到超时；Master存在，则正常写入
             final ClusterState clusterState = observer.setAndGetObservedState();
             if (handleBlockExceptions(clusterState)) {
                 return;
@@ -515,7 +517,7 @@ public class TransportBulkAction extends HandledTransportAction<BulkRequest, Bul
                 }
             }
 
-            // first, go over all the requests and create a ShardId -> Operations mapping
+            // first, go over all the requests and create a ShardId -> Operations mapping[构建路由，合并请求]
             Map<ShardId, List<BulkItemRequest>> requestsByShard = new HashMap<>();
             for (int i = 0; i < bulkRequest.requests.size(); i++) {
                 DocWriteRequest<?> request = bulkRequest.requests.get(i);
@@ -548,7 +550,7 @@ public class TransportBulkAction extends HandledTransportAction<BulkRequest, Bul
                 if (task != null) {
                     bulkShardRequest.setParentTask(nodeId, task.getId());
                 }
-                shardBulkAction.execute(bulkShardRequest, new ActionListener<BulkShardResponse>() {
+                shardBulkAction.execute(bulkShardRequest, new ActionListener<BulkShardResponse>() { // 转发请求的具体实现TransportReplicationAction.runReroutePhase
                     @Override
                     public void onResponse(BulkShardResponse bulkShardResponse) {
                         for (BulkItemResponse bulkItemResponse : bulkShardResponse.getResponses()) {
