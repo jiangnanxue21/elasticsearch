@@ -1,0 +1,1 @@
+{"type": "deprecation", "timestamp": "2021-05-31T23:04:39,728+08:00", "level": "DEPRECATION", "component": "o.e.d.n.Node", "cluster.name": "elasticsearch", "node.name": "", "message": "no-jdk distributions that do not bundle a JDK are deprecated and will be removed in a future release" }

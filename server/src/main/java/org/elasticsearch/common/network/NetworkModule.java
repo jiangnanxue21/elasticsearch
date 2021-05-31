@@ -186,6 +186,9 @@ public final class NetworkModule {
         return Collections.unmodifiableList(namedXContents);
     }
 
+    /**
+     * 返回注册的HTTP传输模块
+     */
     public Supplier<HttpServerTransport> getHttpServerTransportSupplier() {
         final String name;
         if (HTTP_TYPE_SETTING.exists(settings)) {
@@ -200,6 +203,9 @@ public final class NetworkModule {
         return factory;
     }
 
+    /**
+     * 返回注册的传输模块
+     */
     public Supplier<Transport> getTransportSupplier() {
         final String name;
         if (TRANSPORT_TYPE_SETTING.exists(settings)) {

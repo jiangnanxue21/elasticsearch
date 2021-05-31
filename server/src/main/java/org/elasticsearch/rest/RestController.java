@@ -316,6 +316,13 @@ public class RestController implements HttpServerTransport.Dispatcher {
             return;
         }
 
+//        curl -v -H 'Content-type':'application/json' -X PUT -d '{
+//        "name": {
+//            "middle": "Winston",
+//                "last":   "Lennon"
+//        }
+//    }'  localhost:9200/my-index-000001/_doc/1
+
         final String rawPath = request.rawPath();
         final String uri = request.uri();
         final RestRequest.Method requestMethod;

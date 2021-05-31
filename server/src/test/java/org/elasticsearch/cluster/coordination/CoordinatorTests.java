@@ -106,7 +106,7 @@ public class CoordinatorTests extends AbstractCoordinatorTestCase {
      */
     public void testStateRecoveryResetAfterPreviousLeadership() {
         try (Cluster cluster = new Cluster(3)) {
-            cluster.runRandomly();
+            cluster.runRandomly(); // 模拟节点随机运行
             cluster.stabilise();
 
             final ClusterNode leader = cluster.getAnyLeader();
