@@ -83,6 +83,7 @@ public class JarHell {
         if (loader instanceof URLClassLoader) {
             output.accept("classloader urls: " + Arrays.toString(((URLClassLoader)loader).getURLs()));
         }
+        // 参数1：Set<Url> 全部jar包的集合
         checkJarHell(parseClassPath(), output);
     }
 
@@ -138,7 +139,7 @@ public class JarHell {
                     // Eclipse adds this to the classpath when running unit tests...
                     continue;
                 }
-                URL url = PathUtils.get(element).toUri().toURL();               
+                URL url = PathUtils.get(element).toUri().toURL();
                 // junit4.childvm.count
                 if (urlElements.add(url) == false && element.endsWith(".jar")) {
                     throw new IllegalStateException("jar hell!" + System.lineSeparator() +
@@ -163,13 +164,18 @@ public class JarHell {
         // we don't try to be sneaky and use deprecated/internal/not portable stuff
         // like sun.boot.class.path, and with jigsaw we don't yet have a way to get
         // a "list" at all. So just exclude any elements underneath the java home
-        String javaHome = System.getProperty("java.home");
+        String javaHome = System.getProperty("java.home"); // JDK公共的底层jar包的位置
         output.accept("java.home: " + javaHome);
+        // key :存储的类的全限定名
+        // v: 类的jar包path
         final Map<String,Path> clazzes = new HashMap<>(32768);
+        // 如果出现重名的jar，说明是一个jar包冲突
         Set<Path> seenJars = new HashSet<>();
+        // es当前所依赖的全部jar集合
         for (final URL url : urls) {
             final Path path = PathUtils.get(url.toURI());
             // exclude system resources
+            // JDK公共jar包为系统资源，直接continue,不需要检查
             if (path.startsWith(javaHome)) {
                 output.accept("excluding system resource: " + path);
                 continue;
@@ -181,7 +187,7 @@ public class JarHell {
                 }
                 output.accept("examining jar: " + path);
                 try (JarFile file = new JarFile(path.toString())) {
-                    Manifest manifest = file.getManifest();
+                    Manifest manifest = file.getManifest(); // 打包信息
                     if (manifest != null) {
                         checkManifest(manifest, path);
                     }
@@ -251,6 +257,7 @@ public class JarHell {
      */
     public static void checkJavaVersion(String resource, String targetVersion) {
         JavaVersion version = JavaVersion.parse(targetVersion);
+        // 如果发现jar包的编译版本的jdk大于现有的，抛异常
         if (JavaVersion.current().compareTo(version) < 0) {
             throw new IllegalStateException(
                     String.format(
@@ -269,6 +276,7 @@ public class JarHell {
             // Ignore jigsaw module descriptions
             return;
         }
+        // 如果previous不为null，说明存在全限定名相同的class
         Path previous = clazzes.put(clazz, jarpath);
         if (previous != null) {
             if (previous.equals(jarpath)) {

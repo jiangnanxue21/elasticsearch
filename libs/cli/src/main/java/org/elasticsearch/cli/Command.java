@@ -67,6 +67,7 @@ public abstract class Command implements Closeable {
 
             shutdownHookThread = new Thread(() -> {
                 try {
+                    // jvm正常退出时，会回调
                     this.close();
                 } catch (final IOException e) {
                     try (

@@ -302,6 +302,7 @@ public class OperationRouting {
         }
 
         if (indexMetadata.isRoutingPartitionedIndex()) {
+            // hash(id) % routing_partition_size
             partitionOffset = Math.floorMod(Murmur3HashFunction.hash(id), indexMetadata.getRoutingPartitionSize());
         } else {
             // we would have still got 0 above but this check just saves us an unnecessary hash calculation

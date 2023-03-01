@@ -36,7 +36,7 @@ import java.util.Map;
 /** A cli command which requires an {@link org.elasticsearch.env.Environment} to use current paths and settings. */
 public abstract class EnvironmentAwareCommand extends Command {
 
-    private final OptionSpec<KeyValuePair> settingOption;
+    private final OptionSpec<KeyValuePair> settingOption; // 选项定义信息
 
     /**
      * Construct the command with the specified command description. This command will have logging configured without reading Elasticsearch
@@ -63,6 +63,8 @@ public abstract class EnvironmentAwareCommand extends Command {
     @Override
     protected void execute(Terminal terminal, OptionSet options) throws Exception {
         final Map<String, String> settings = new HashMap<>();
+        // -E xx1=xx, xx2=xx, xx3=xx
+        // 从options解析出的E选项的kv，可以多个
         for (final KeyValuePair kvp : settingOption.values(options)) {
             if (kvp.value.isEmpty()) {
                 throw new UserException(ExitCodes.USAGE, "setting [" + kvp.key + "] must not be empty");
@@ -79,6 +81,7 @@ public abstract class EnvironmentAwareCommand extends Command {
             settings.put(kvp.key, kvp.value);
         }
 
+        // es脚本有设置    -Des.path.home="$ES_HOME"
         putSystemPropertyIfSettingIsMissing(settings, "path.data", "es.path.data");
         putSystemPropertyIfSettingIsMissing(settings, "path.home", "es.path.home");
         putSystemPropertyIfSettingIsMissing(settings, "path.logs", "es.path.logs");

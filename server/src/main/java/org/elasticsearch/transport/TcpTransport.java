@@ -296,6 +296,7 @@ public abstract class TcpTransport extends AbstractLifecycleComponent implements
 
     private List<TcpChannel> initiateConnection(DiscoveryNode node, ConnectionProfile connectionProfile,
                                                 ActionListener<Transport.Connection> listener) {
+        // 获取总连接数
         int numConnections = connectionProfile.getNumConnections();
         assert numConnections > 0 : "A connection profile must be configured with at least one connection";
 
@@ -303,6 +304,7 @@ public abstract class TcpTransport extends AbstractLifecycleComponent implements
 
         for (int i = 0; i < numConnections; ++i) {
             try {
+                // 建立一个连接
                 TcpChannel channel = initiateChannel(node);
                 logger.trace(() -> new ParameterizedMessage("Tcp transport client channel opened: {}", channel));
                 channels.add(channel);
@@ -311,6 +313,7 @@ public abstract class TcpTransport extends AbstractLifecycleComponent implements
                 listener.onFailure(e);
                 return channels;
             } catch (Exception e) {
+                // 如果产生异常，则关闭所有连接
                 CloseableChannel.closeChannels(channels, false);
                 listener.onFailure(new ConnectTransportException(node, "general node connection failure", e));
                 return channels;

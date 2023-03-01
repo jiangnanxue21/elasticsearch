@@ -57,7 +57,7 @@ class Elasticsearch extends EnvironmentAwareCommand {
             "Prints Elasticsearch version information and exits");
         daemonizeOption = parser.acceptsAll(Arrays.asList("d", "daemonize"),
             "Starts Elasticsearch in the background")
-            .availableUnless(versionOption);
+            .availableUnless(versionOption); // 除非没有version信息
         pidfileOption = parser.acceptsAll(Arrays.asList("p", "pidfile"),
             "Creates a pid file in the specified path on start")
             .availableUnless(versionOption)
@@ -71,6 +71,14 @@ class Elasticsearch extends EnvironmentAwareCommand {
 
     /**
      * Main entry point for starting elasticsearch
+     * 支持的参数：
+     *  -E cluster.name=my_cluster
+     *  -V --version
+     *  -d 后台启动
+     *  -h 帮助信息
+     *  -p 启动的时候会创建一个pid参数，文件中保存当前进程的进程id值，注意-p参数必须跟一个path值
+     *  -q 关闭控制台的标准输出和标准错误输出
+     *  -v 终端输出详细的信息
      */
     public static void main(final String[] args) throws Exception {
         overrideDnsCachePolicyProperties();
@@ -89,6 +97,7 @@ class Elasticsearch extends EnvironmentAwareCommand {
         });
         LogConfigurator.registerErrorListener();
         final Elasticsearch elasticsearch = new Elasticsearch();
+        // Terminal终端对象，负责输出到终端
         int status = main(args, elasticsearch, Terminal.DEFAULT);
         if (status != ExitCodes.OK) {
             final String basePath = System.getProperty("es.logs.base_path");
@@ -128,6 +137,7 @@ class Elasticsearch extends EnvironmentAwareCommand {
 
     @Override
     protected void execute(Terminal terminal, OptionSet options, Environment env) throws UserException {
+        // 判断options这个args解析出来的选项集合中，是否包含未指定-D -E...配置
         if (options.nonOptionArguments().isEmpty() == false) {
             throw new UserException(ExitCodes.USAGE, "Positional arguments not allowed, found " + options.nonOptionArguments());
         }
@@ -146,7 +156,10 @@ class Elasticsearch extends EnvironmentAwareCommand {
             return;
         }
 
+        // 判断启动参数是否有 -d，如果有，将daemonize设置成true，表示要后台运行
         final boolean daemonize = options.has(daemonizeOption);
+
+        // 将pid路径解析出来
         final Path pidFile = pidfileOption.value(options);
         final boolean quiet = options.has(quietOption);
 

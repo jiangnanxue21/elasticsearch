@@ -91,6 +91,9 @@ public class InternalSettingsPreparer {
         checkSettingsForTerminalDeprecation(output);
         finalizeSettings(output, defaultNodeName);
 
+        // 创建一个环境变量
+        // 参数1：output.build()返回的settings是一个大而全的配置，包含了E选项和yml内的配置
+        // 参数2： 配置文件路径
         return new Environment(output.build(), configPath);
     }
 

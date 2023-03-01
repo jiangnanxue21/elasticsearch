@@ -96,6 +96,8 @@ class ElasticsearchUncaughtExceptionHandler implements Thread.UncaughtExceptionH
         @Override
         public Void run() {
             // we halt to prevent shutdown hooks from running
+            // halt方法被调用之后，进程就结束了
+            // 和exit的区别：exit会执行hook，halt不会回调
             Runtime.getRuntime().halt(status);
             return null;
         }

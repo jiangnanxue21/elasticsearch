@@ -106,8 +106,19 @@ public final class NetworkModule {
 
     /**
      * Creates a network module that custom networking classes can be plugged into.
-     * @param settings The settings for the node
-     * @param transportClient True if only transport classes should be allowed to be registered, false otherwise.
+     * @param settings settings The settings for the node
+     * @param transportClient transportClient True if only transport classes should be allowed to be registered, false otherwise.
+     * @param plugins 网络层的插件, NetworkPlugin提供了TCP Transport和HTTP Transport
+     * @param threadPool ES线程池
+     * @param bigArrays 大数组，通讯的时候使用它的空间，作为临时空间
+     * @param pageCacheRecycler 暂不
+     * @param circuitBreakerService 暂不
+     * @param namedWriteableRegistry 暂不
+     * @param xContentRegistry 暂不
+     * @param networkService 网络服务，主要用于将会hosts地址转换成java network对象地址，解析地址用
+     * @param dispatcher 它的实现是restController，它内部注册了很多的处理器，对外提供访问路由的功能。
+     *                   也就是HTTP请求最终会转换成restRequest， 最终会交给RestController去找适合的handler，然后访问到最终的业务层逻辑
+     * @param clusterSettings 暂不
      */
     public NetworkModule(Settings settings, boolean transportClient, List<NetworkPlugin> plugins, ThreadPool threadPool,
                          BigArrays bigArrays,
@@ -120,6 +131,7 @@ public final class NetworkModule {
         this.settings = settings;
         this.transportClient = transportClient;
         for (NetworkPlugin plugin : plugins) {
+            // 获取插件中定义的HttpTransport实现，
             Map<String, Supplier<HttpServerTransport>> httpTransportFactory = plugin.getHttpTransports(settings, threadPool, bigArrays,
                 pageCacheRecycler, circuitBreakerService, xContentRegistry, networkService, dispatcher, clusterSettings);
             if (transportClient == false) {
@@ -192,8 +204,10 @@ public final class NetworkModule {
     public Supplier<HttpServerTransport> getHttpServerTransportSupplier() {
         final String name;
         if (HTTP_TYPE_SETTING.exists(settings)) {
+            // 可以配置 Nio....
             name = HTTP_TYPE_SETTING.get(settings);
         } else {
+            // 默认netty4
             name = HTTP_DEFAULT_TYPE_SETTING.get(settings);
         }
         final Supplier<HttpServerTransport> factory = transportHttpFactories.get(name);
@@ -211,6 +225,7 @@ public final class NetworkModule {
         if (TRANSPORT_TYPE_SETTING.exists(settings)) {
             name = TRANSPORT_TYPE_SETTING.get(settings);
         } else {
+            // 不指定默认netty4
             name = TRANSPORT_DEFAULT_TYPE_SETTING.get(settings);
         }
         final Supplier<Transport> factory = transportFactories.get(name);

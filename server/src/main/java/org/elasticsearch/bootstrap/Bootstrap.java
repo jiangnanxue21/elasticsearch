@@ -82,6 +82,9 @@ final class Bootstrap {
 
     /** creates a new instance */
     Bootstrap() {
+        // 防止系统其他线程都结束了，然后整个进程挂了。。
+        // keepalive线程启之后，就会在latch上await，直到latch归0
+        // 只是创建，没有启动
         keepAliveThread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -97,6 +100,7 @@ final class Bootstrap {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
+                // jvm退出的时候，让keepaliave线程生命进程结束
                 keepAliveLatch.countDown();
             }
         });
@@ -113,10 +117,12 @@ final class Bootstrap {
 
         // enable system call filter
         if (systemCallFilter) {
+            // 检查系统是否支持一些系统调用api
             Natives.tryInstallSystemCallFilter(tmpFile);
         }
 
         // mlockall if requested
+        // 锁定内存必须在物理内存
         if (mlockAll) {
             if (Constants.WINDOWS) {
                Natives.tryVirtualLock();
@@ -175,6 +181,7 @@ final class Bootstrap {
             throw new BootstrapException(e);
         }
 
+        // 初始化本地相关资源
         initializeNatives(
                 environment.tmpFile(),
                 BootstrapSettings.MEMORY_LOCK_SETTING.get(settings),
@@ -182,6 +189,7 @@ final class Bootstrap {
                 BootstrapSettings.CTRLHANDLER_SETTING.get(settings));
 
         // initialize probes before the security manager is installed
+        // 监控相关初始化
         initializeProbes();
 
         if (addShutdownHook) {
@@ -209,6 +217,7 @@ final class Bootstrap {
         try {
             // look for jar hell
             final Logger logger = LogManager.getLogger(JarHell.class);
+            // jar包冲突检测
             JarHell.checkJarHell(logger::debug);
         } catch (IOException | URISyntaxException e) {
             throw new BootstrapException(e);
@@ -342,11 +351,15 @@ final class Bootstrap {
             final Environment initialEnv) throws BootstrapException, NodeValidationException, UserException {
         // force the class initializer for BootstrapInfo to run before
         // the security manager is installed
+        // 保存了一份系统变量 在static代码块
         BootstrapInfo.init();
 
         INSTANCE = new Bootstrap();
 
+        // 加载安全相关的配置
         final SecureSettings keystore = loadSecureSettings(initialEnv);
+
+        // 创建新的env，多了安全相关的配置
         final Environment environment = createEnvironment(pidFile, keystore, initialEnv.settings(), initialEnv.configFile());
 
         LogConfigurator.setNodeName(Node.NODE_NAME_SETTING.get(environment.settings()));
@@ -374,12 +387,16 @@ final class Bootstrap {
         final boolean closeStandardStreams = (foreground == false) || quiet;
         try {
             if (closeStandardStreams) {
+                // 关闭一些标准输出
+                // log4j.rootLogger=INFO,ConsoleAppender, File
                 final Logger rootLogger = LogManager.getRootLogger();
+                // 将和rootlogger有关的ConsoleAppender获取出来
                 final Appender maybeConsoleAppender = Loggers.findAppender(rootLogger, ConsoleAppender.class);
+                // 如果maybeConsoleAppender != null，则说明日志会向控制台输出
                 if (maybeConsoleAppender != null) {
                     Loggers.removeAppender(rootLogger, maybeConsoleAppender);
                 }
-                closeSystOut();
+                closeSystOut(); // 标准输出关闭
             }
 
             // fail if somebody replaced the lucene jars
@@ -388,6 +405,7 @@ final class Bootstrap {
             // install the default uncaught exception handler; must be done before security is
             // initialized as we do not want to grant the runtime permission
             // setDefaultUncaughtExceptionHandler
+            // 给线程配置了一个未捕获异常处理器
             Thread.setDefaultUncaughtExceptionHandler(new ElasticsearchUncaughtExceptionHandler());
 
             INSTANCE.setup(true, environment);

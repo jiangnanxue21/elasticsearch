@@ -105,13 +105,13 @@ public class Netty4HttpServerTransport extends AbstractHttpServerTransport {
              * Netty accumulates buffers containing data from all incoming network packets that make up one HTTP request in an instance of
              * io.netty.buffer.CompositeByteBuf (think of it as a buffer of buffers). Once its capacity is reached, the buffer will iterate
              * over its individual entries and put them into larger buffers (see io.netty.buffer.CompositeByteBuf#consolidateIfNeeded()
-             * for implementation details). We want to to resize that buffer because this leads to additional garbage on the heap and also
+             * for implementation details). We want to resize that buffer because this leads to additional garbage on the heap and also
              * increases the application's native memory footprint (as direct byte buffers hold their contents off-heap).
              *
-             * With this setting we control the CompositeByteBuf's capacity (which is by default 1024, see
+             * With this setting we control the CompositeByteBuff's capacity (which is by default 1024, see
              * io.netty.handler.codec.MessageAggregator#DEFAULT_MAX_COMPOSITEBUFFER_COMPONENTS). To determine a proper default capacity for
              * that buffer, we need to consider that the upper bound for the size of HTTP requests is determined by `maxContentLength`. The
-             * number of buffers that are needed depend on how often Netty reads network packets which depends on the network type (MTU).
+             * number of buffers that are needed to depend on how often Netty reads network packets which depends on the network type (MTU).
              * We assume here that Elasticsearch receives HTTP requests via an Ethernet connection which has a MTU of 1500 bytes.
              *
              * Note that we are *not* pre-allocating any memory based on this setting but rather determine the CompositeByteBuf's capacity.
@@ -145,6 +145,7 @@ public class Netty4HttpServerTransport extends AbstractHttpServerTransport {
     private volatile ServerBootstrap serverBootstrap;
     private volatile SharedGroupFactory.SharedGroup sharedGroup;
 
+    // sharedGroupFactory: netty nioEventGroup
     public Netty4HttpServerTransport(Settings settings, NetworkService networkService, BigArrays bigArrays, ThreadPool threadPool,
                                      NamedXContentRegistry xContentRegistry, Dispatcher dispatcher, ClusterSettings clusterSettings,
                                      SharedGroupFactory sharedGroupFactory) {
@@ -153,6 +154,7 @@ public class Netty4HttpServerTransport extends AbstractHttpServerTransport {
         NettyAllocator.logAllocatorDescriptionIfNeeded();
         this.sharedGroupFactory = sharedGroupFactory;
 
+        // http编解码使用的参数
         this.maxChunkSize = SETTING_HTTP_MAX_CHUNK_SIZE.get(settings);
         this.maxHeaderSize = SETTING_HTTP_MAX_HEADER_SIZE.get(settings);
         this.maxInitialLineLength = SETTING_HTTP_MAX_INITIAL_LINE_LENGTH.get(settings);
@@ -163,6 +165,8 @@ public class Netty4HttpServerTransport extends AbstractHttpServerTransport {
         this.readTimeoutMillis = Math.toIntExact(SETTING_HTTP_READ_TIMEOUT.get(settings).getMillis());
 
         ByteSizeValue receivePredictor = SETTING_HTTP_NETTY_RECEIVE_PREDICTOR_SIZE.get(settings);
+
+        // nio nioScoketChannel创建之后会注册到selector纸上，监听read事件
         recvByteBufAllocator = new FixedRecvByteBufAllocator(receivePredictor.bytesAsInt());
 
         logger.debug("using max_chunk_size[{}], max_header_size[{}], max_initial_line_length[{}], max_content_length[{}], " +
@@ -170,11 +174,11 @@ public class Netty4HttpServerTransport extends AbstractHttpServerTransport {
             maxChunkSize, maxHeaderSize, maxInitialLineLength, maxContentLength, receivePredictor, maxCompositeBufferComponents,
             pipeliningMaxEvents);
     }
-
     public Settings settings() {
         return this.settings;
     }
 
+    // 在injector.getInstance(HttpServerTransport.class).start()中调用
     @Override
     protected void doStart() {
         boolean success = false;
