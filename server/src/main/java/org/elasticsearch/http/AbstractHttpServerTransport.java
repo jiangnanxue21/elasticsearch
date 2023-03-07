@@ -144,11 +144,14 @@ public abstract class AbstractHttpServerTransport extends AbstractLifecycleCompo
             throw new BindHttpException("Failed to resolve host [" + Arrays.toString(bindHosts) + "]", e);
         }
 
+        // IP:PORT
         List<TransportAddress> boundAddresses = new ArrayList<>(hostAddresses.length);
         for (InetAddress address : hostAddresses) {
             boundAddresses.add(bindAddress(address));
         }
 
+        // 发布地址：前面可能绑定了多个ip:port 这里有一个发布地址，用途是告知外网，如何访问es
+        // 只返回一个地址
         final InetAddress publishInetAddress;
         try {
             publishInetAddress = networkService.resolvePublishHostAddresses(publishHosts);
@@ -165,6 +168,10 @@ public abstract class AbstractHttpServerTransport extends AbstractLifecycleCompo
     private TransportAddress bindAddress(final InetAddress hostAddress) {
         final AtomicReference<Exception> lastException = new AtomicReference<>();
         final AtomicReference<InetSocketAddress> boundSocket = new AtomicReference<>();
+
+        // 默认情况：port表示9200-9300这个范围的端口
+        // lambda表达式：区绑定一个指定的端口...
+        // 从9200开始去绑定，失败则绑定9201...
         boolean success = port.iterate(portNumber -> {
             try {
                 synchronized (httpServerChannels) {

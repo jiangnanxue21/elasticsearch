@@ -167,6 +167,8 @@ public class Netty4HttpServerTransport extends AbstractHttpServerTransport {
         ByteSizeValue receivePredictor = SETTING_HTTP_NETTY_RECEIVE_PREDICTOR_SIZE.get(settings);
 
         // nio nioScoketChannel创建之后会注册到selector纸上，监听read事件
+        // netty NIOsocketchannel响应read事件，会到读取缓冲区中加载网络数据，此时会拿多大的一个byteBuf呢？
+        // 由这个recvByteBufAllocator定义，默认64kb
         recvByteBufAllocator = new FixedRecvByteBufAllocator(receivePredictor.bytesAsInt());
 
         logger.debug("using max_chunk_size[{}], max_header_size[{}], max_initial_line_length[{}], max_content_length[{}], " +
@@ -178,7 +180,7 @@ public class Netty4HttpServerTransport extends AbstractHttpServerTransport {
         return this.settings;
     }
 
-    // 在injector.getInstance(HttpServerTransport.class).start()中调用
+    // 在Node的injector.getInstance(HttpServerTransport.class).start()中调用
     @Override
     protected void doStart() {
         boolean success = false;
@@ -192,12 +194,18 @@ public class Netty4HttpServerTransport extends AbstractHttpServerTransport {
             serverBootstrap.channel(NettyAllocator.getServerChannelType());
 
             // Set the allocators for both the server channel and the child channels created
+            // 内存池
             serverBootstrap.option(ChannelOption.ALLOCATOR, NettyAllocator.getAllocator());
             serverBootstrap.childOption(ChannelOption.ALLOCATOR, NettyAllocator.getAllocator());
 
+            // 非常重要：
+            // 通过服务绑定的端口，客户端向本地端口发起连接请求
+            // 在server pipeline中有一个ServerBootstrapAcceptor处理器，会给新进来的niosockerchannel设定初始的handler
             serverBootstrap.childHandler(configureServerChannelHandler());
+            // 异常情况
             serverBootstrap.handler(new ServerChannelExceptionHandler(this));
 
+            // 设置nioSocketChannel option...
             serverBootstrap.childOption(ChannelOption.TCP_NODELAY, SETTING_HTTP_TCP_NO_DELAY.get(settings));
             serverBootstrap.childOption(ChannelOption.SO_KEEPALIVE, SETTING_HTTP_TCP_KEEP_ALIVE.get(settings));
 
@@ -226,6 +234,7 @@ public class Netty4HttpServerTransport extends AbstractHttpServerTransport {
                 }
             }
 
+            // socket写缓冲区大小
             final ByteSizeValue tcpSendBufferSize = SETTING_HTTP_TCP_SEND_BUFFER_SIZE.get(settings);
             if (tcpSendBufferSize.getBytes() > 0) {
                 serverBootstrap.childOption(ChannelOption.SO_SNDBUF, Math.toIntExact(tcpSendBufferSize.getBytes()));
@@ -243,6 +252,7 @@ public class Netty4HttpServerTransport extends AbstractHttpServerTransport {
             serverBootstrap.option(ChannelOption.SO_REUSEADDR, reuseAddress);
             serverBootstrap.childOption(ChannelOption.SO_REUSEADDR, reuseAddress);
 
+            // 绑定服务器的接口，是关键
             bindServer();
             success = true;
         } finally {
@@ -279,6 +289,7 @@ public class Netty4HttpServerTransport extends AbstractHttpServerTransport {
     }
 
     public ChannelHandler configureServerChannelHandler() {
+        // 初始化Niosocketchannel -> pipeline
         return new HttpChannelHandler(this, handlingSettings);
     }
 

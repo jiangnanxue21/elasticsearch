@@ -117,7 +117,7 @@ public final class NetworkModule {
      * @param xContentRegistry 暂不
      * @param networkService 网络服务，主要用于将会hosts地址转换成java network对象地址，解析地址用
      * @param dispatcher 它的实现是restController，它内部注册了很多的处理器，对外提供访问路由的功能。
-     *                   也就是HTTP请求最终会转换成restRequest， 最终会交给RestController去找适合的handler，然后访问到最终的业务层逻辑
+     *                   也就是HTTP请求最终会转换成restRequest，最终会交给RestController去找适合的handler，然后访问到最终的业务层逻辑
      * @param clusterSettings 暂不
      */
     public NetworkModule(Settings settings, boolean transportClient, List<NetworkPlugin> plugins, ThreadPool threadPool,
@@ -131,7 +131,7 @@ public final class NetworkModule {
         this.settings = settings;
         this.transportClient = transportClient;
         for (NetworkPlugin plugin : plugins) {
-            // 获取插件中定义的HttpTransport实现，
+            // 获取插件中定义的HttpTransport实现
             Map<String, Supplier<HttpServerTransport>> httpTransportFactory = plugin.getHttpTransports(settings, threadPool, bigArrays,
                 pageCacheRecycler, circuitBreakerService, xContentRegistry, networkService, dispatcher, clusterSettings);
             if (transportClient == false) {
@@ -203,8 +203,9 @@ public final class NetworkModule {
      */
     public Supplier<HttpServerTransport> getHttpServerTransportSupplier() {
         final String name;
+        // 配置中是否指定了实现
         if (HTTP_TYPE_SETTING.exists(settings)) {
-            // 可以配置 Nio....
+            // 可以配置 nio....
             name = HTTP_TYPE_SETTING.get(settings);
         } else {
             // 默认netty4
