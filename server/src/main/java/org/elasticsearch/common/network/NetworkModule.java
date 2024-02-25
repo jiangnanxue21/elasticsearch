@@ -139,6 +139,7 @@ public final class NetworkModule {
                     registerHttpTransport(entry.getKey(), entry.getValue());
                 }
             }
+            // 获取插件中定义的Transport实现
             Map<String, Supplier<Transport>> transportFactory = plugin.getTransports(settings, threadPool, pageCacheRecycler,
                 circuitBreakerService, namedWriteableRegistry, networkService);
             for (Map.Entry<String, Supplier<Transport>> entry : transportFactory.entrySet()) {

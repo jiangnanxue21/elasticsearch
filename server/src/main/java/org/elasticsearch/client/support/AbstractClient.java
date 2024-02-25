@@ -404,7 +404,16 @@ public abstract class AbstractClient implements Client {
 
     /**
      * This is the single execution point of *all* clients.
+     * @param action           ActionType类型，通过它可以找到一个Transport*Action实例，Rest*Action都有一个对应的Transport*Action实例
+     *                         并且Transport*Action它是内置RPC请求的处理器，也就是说http请求的逻辑和RPC请求的逻辑实现功能的都是同一套东西，是由Transport*Action来完成的
+     * @param request          The action request. RestRequest对象
+     * @param listener         The listener to receive the response back. 这个listener由BaseRestHandler子类提供
+     * @param <Request>
+     * @param <Response>
      */
+    // 类型一般为：RestBuilderListener，它包装了RestChannel实例，对上层提供了processResponse(response)方法。
+    // 它先将上层的response对象转换成 XContentBuilder对象，可以把它当做构建json的builder。
+    // 之后再将数据交给 RestBuilderListener封装的restChannel实例，在restChannel#httpChannel->sendResponse(...)
     @Override
     public final <Request extends ActionRequest, Response extends ActionResponse> void execute(
         ActionType<Response> action, Request request, ActionListener<Response> listener) {

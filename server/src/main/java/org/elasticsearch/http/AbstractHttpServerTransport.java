@@ -137,7 +137,7 @@ public abstract class AbstractHttpServerTransport extends AbstractLifecycleCompo
 
     protected void bindServer() {
         // Bind and start to accept incoming connections.
-        InetAddress hostAddresses[];
+        InetAddress[] hostAddresses;
         try {
             hostAddresses = networkService.resolveBindHostAddresses(bindHosts);
         } catch (IOException e) {
@@ -301,6 +301,8 @@ public abstract class AbstractHttpServerTransport extends AbstractLifecycleCompo
     protected void serverAcceptedChannel(HttpChannel httpChannel) {
         boolean addedOnThisCall = httpChannels.add(httpChannel);
         assert addedOnThisCall : "Channel should only be added to http channel set once";
+
+        // 做一个统计，多少http连接进来了
         totalChannelsAccepted.incrementAndGet();
         httpChannel.addCloseListener(ActionListener.wrap(() -> httpChannels.remove(httpChannel)));
         logger.trace(() -> new ParameterizedMessage("Http channel accepted: {}", httpChannel));
@@ -308,6 +310,7 @@ public abstract class AbstractHttpServerTransport extends AbstractLifecycleCompo
 
     /**
      * This method handles an incoming http request.
+     * 处理入口
      *
      * @param httpRequest that is incoming
      * @param httpChannel that received the http request
@@ -323,6 +326,7 @@ public abstract class AbstractHttpServerTransport extends AbstractLifecycleCompo
             if (badRequestCause != null) {
                 dispatcher.dispatchBadRequest(channel, threadContext, badRequestCause);
             } else {
+                // dispatcher它的实现是RestController，RestController内部注册了很多的处理器，对外提供访问路由的功能，
                 dispatcher.dispatchRequest(restRequest, channel, threadContext);
             }
         }
@@ -346,6 +350,8 @@ public abstract class AbstractHttpServerTransport extends AbstractLifecycleCompo
          * attempt to create a REST request again without the input that caused the exception (e.g., we remove the Content-Type header,
          * or skip decoding the parameters). Once we have a request in hand, we then dispatch the request as a bad request with the
          * underlying exception that caused us to treat the request as bad.
+         *
+         * rest风格的请求对象
          */
         final RestRequest restRequest;
         {
@@ -369,6 +375,9 @@ public abstract class AbstractHttpServerTransport extends AbstractLifecycleCompo
          * parameter values for any of the filter_path, human, or pretty parameters. We detect these specific failures via an
          * IllegalArgumentException from the channel constructor and then attempt to create a new channel that bypasses parsing of these
          * parameter values.
+         *
+         * rest风格的会话对象
+         * 将上层的RestResponse对象转换为HttpResponse再交给底层的NioSocketChannel.writeAndFlush...
          */
         final RestChannel channel;
         {

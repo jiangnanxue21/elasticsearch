@@ -42,7 +42,7 @@ import java.util.function.Supplier;
  */
 public class NodeClient extends AbstractClient {
 
-    private Map<ActionType, TransportAction> actions;
+    private Map<ActionType, TransportAction> actions; //该actions内部存储的是全部的RPC类型，以及RPC请求处理器
     /**
      * The id of the local {@link DiscoveryNode}. Useful for generating task ids from tasks returned by
      * {@link #executeLocally(ActionType, ActionRequest, TaskListener)}.
@@ -83,6 +83,9 @@ public class NodeClient extends AbstractClient {
     public <    Request extends ActionRequest,
                 Response extends ActionResponse
             > Task executeLocally(ActionType<Response> action, Request request, ActionListener<Response> listener) {
+        // transportAction(action)这一步将会返回给你一个具体的Transport*Action实例
+        // 第二步：调用上一步的Transport*Action->execute(request, listener)；调用到了父类：TransportAction->execute方法，
+        // 在该方法中会做一些过滤，之后再调用子类的doExecute方法..
         return transportAction(action).execute(request, listener);
     }
 

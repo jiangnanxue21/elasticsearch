@@ -57,10 +57,14 @@ final class Netty4MessageChannelHandler extends ChannelDuplexHandler {
         this.transport = transport;
         final ThreadPool threadPool = transport.getThreadPool();
         final Transport.RequestHandlers requestHandlers = transport.getRequestHandlers();
+        // 这个是handler内置的pipeline
+        // transport::inboundMessage 处理解码后的请求 也就是说在handler内置的pipeline中
+        // 会将解码后的msg交给transport::inboundMessage 方法来处理了..
         this.pipeline = new InboundPipeline(transport.getVersion(), transport.getStatsTracker(), recycler, threadPool::relativeTimeInMillis,
             transport.getInflightBreaker(), requestHandlers::getHandler, transport::inboundMessage);
     }
 
+    // 读消息
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         assert Transports.assertDefaultThreadContext(transport.getThreadPool().getThreadContext());

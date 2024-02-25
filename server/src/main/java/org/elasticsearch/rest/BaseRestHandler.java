@@ -91,6 +91,9 @@ public abstract class BaseRestHandler implements RestHandler {
     @Override
     public final void handleRequest(RestRequest request, RestChannel channel, NodeClient client) throws Exception {
         // prepare the request for execution; has the side effect of touching the request parameters
+        // 该方法是由BaseRestHandler的子类实现的，最终会返回一个lambda表达式
+        // 表达式的大概逻辑：将RestRequest解析成业务层的请求对象（indexRequest），
+        // 然后再去调用nodeClient.execute(actionType, ***Request, new Listener(channel));
         final RestChannelConsumer action = prepareRequest(request, client);
 
         // validate unconsumed params, but we must exclude params used to format the response
