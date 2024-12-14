@@ -1,0 +1,1 @@
+-Des.path.home=eshome -Des.path.conf=eshome/config -Xms1g -Xmx1g -Dlog4j2.disable.jmx=true -Djava.security.policy=eshome/config/elasticsearch.policy

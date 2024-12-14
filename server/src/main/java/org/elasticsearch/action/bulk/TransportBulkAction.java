@@ -442,6 +442,7 @@ public class TransportBulkAction extends HandledTransportAction<BulkRequest, Bul
             this.responses = responses;
             this.startTimeNanos = startTimeNanos;
             this.indicesThatCannotBeCreated = indicesThatCannotBeCreated;
+            // 集群状态的订阅对象，通过observer可以获取集群状态，并且等待集群状态发生变化的时候
             this.observer = new ClusterStateObserver(clusterService, bulkRequest.timeout(), logger, threadPool.getThreadContext());
         }
 

@@ -129,8 +129,12 @@ public class RestRequest implements ToXContent.Params {
      * @throws ContentTypeHeaderException if the Content-Type header can not be parsed
      */
     public static RestRequest request(NamedXContentRegistry xContentRegistry, HttpRequest httpRequest, HttpChannel httpChannel) {
-        Map<String, String> params = params(httpRequest.uri());
-        String path = path(httpRequest.uri());
+
+        // 解析uri请求中的参数， 127.0.0.1:9200/test/_doc/1?p1=xxx,p2=xx
+        Map<String, String> params = params(httpRequest.uri()); // 将？后面的解析成map
+        String path = path(httpRequest.uri()); // /test/_doc/1
+
+        // 创建rest请求对象
         return new RestRequest(xContentRegistry, params, path, httpRequest.getHeaders(), httpRequest, httpChannel,
             requestIdGenerator.incrementAndGet());
     }

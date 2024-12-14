@@ -263,7 +263,7 @@ public class TaskBatcherTests extends TaskExecutorTests {
         final CountDownLatch latch = new CountDownLatch(numOfTasks);
         Set<Integer> usedKeys = new HashSet<>(numOfTasks);
         for (int i = 0; i < numOfTasks; i++) {
-            int key = randomValueOtherThanMany(k -> usedKeys.contains(k), () -> randomInt(1024));
+            int key = randomValueOtherThanMany(usedKeys::contains, () -> randomInt(1024));
             tasks.put(key, new TestListener() {
                 @Override
                 public void processed(String source) {
@@ -281,7 +281,7 @@ public class TaskBatcherTests extends TaskExecutorTests {
 
         TestExecutor<Integer> executor = taskList -> {
             assertThat(taskList.size(), equalTo(tasks.size()));
-            assertThat(taskList.stream().collect(Collectors.toSet()), equalTo(tasks.keySet()));
+            assertThat(new HashSet<>(taskList), equalTo(tasks.keySet()));
         };
         submitTasks("test", tasks, ClusterStateTaskConfig.build(Priority.LANGUID), executor);
 

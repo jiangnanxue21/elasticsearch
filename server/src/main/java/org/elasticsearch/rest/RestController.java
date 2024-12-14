@@ -255,6 +255,8 @@ public class RestController implements HttpServerTransport.Dispatcher {
                 client.threadPool().getThreadContext().putHeader(SYSTEM_INDEX_ACCESS_CONTROL_HEADER_KEY, Boolean.FALSE.toString());
             }
 
+            // 核心代码，处理请求，入口
+            // 该方法的实现：BaseRestHandler
             handler.handleRequest(request, responseChannel, client);
         } catch (Exception e) {
             responseChannel.sendResponse(new BytesRestResponse(responseChannel, e));
@@ -333,6 +335,7 @@ public class RestController implements HttpServerTransport.Dispatcher {
             Iterator<MethodHandlers> allHandlers = getAllHandlers(request.params(), rawPath);
             while (allHandlers.hasNext()) {
                 final RestHandler handler;
+                // MethodHandlers 相同的路径下，GET, POST, PUT, DELETE的请求handler是不一样的
                 final MethodHandlers handlers = allHandlers.next();
                 if (handlers == null) {
                     handler = null;

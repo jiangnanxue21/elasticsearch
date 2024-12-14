@@ -44,9 +44,15 @@ import java.util.stream.Collectors;
 public abstract class TaskBatcher {
 
     private final Logger logger;
+
+    // 线程池，Master主节点执行任务的线程池
     private final PrioritizedEsThreadPoolExecutor threadExecutor;
-    // package visible for tests
+
+    // 用于任务去重的，即 提交了一组任务，但是一组任务只关联一个 executor ，这种情况
+    // key：batchingKey （ps: batchingKey其实是executor）
+    // value：关注这个executor结果的这一批 task
     final Map<Object, LinkedHashSet<BatchedTask>> tasksPerBatchingKey = new HashMap<>();
+
 
     public TaskBatcher(Logger logger, PrioritizedEsThreadPoolExecutor threadExecutor) {
         this.logger = logger;
@@ -57,6 +63,9 @@ public abstract class TaskBatcher {
         if (tasks.isEmpty()) {
             return;
         }
+
+        // 获取tasks中的首任务
+        // 注意：一般情况下，tasks中只有一个任务。特殊情况时，才会出现tasks中多个任务..（ElectionContext.closeAndBecomeMaster(..)）
         final BatchedTask firstTask = tasks.get(0);
         assert tasks.stream().allMatch(t -> t.batchingKey == firstTask.batchingKey) :
             "tasks submitted in a batch should share the same batching key: " + tasks;
@@ -78,6 +87,8 @@ public abstract class TaskBatcher {
                         Collections.singletonList(existing)) + "] with source [" + duplicateTask.source + "] is already queued");
                 }
             }
+
+            // existingTasks Set集合存放的是同一批关注executor结果的任务
             existingTasks.addAll(tasks);
         }
 
@@ -147,6 +158,10 @@ public abstract class TaskBatcher {
                     return tasks.isEmpty() ? entry.getKey() : entry.getKey() + "[" + tasks + "]";
                 }).reduce((s1, s2) -> s1 + ", " + s2).orElse("");
 
+                // 执行任务
+                // 参数1：updateTask.batchingKey 其实就是firstTask#executor
+                // 参数2：toExecute 关注结果的那一组task
+                // 参数3：tasksSummary 任务描述信息
                 run(updateTask.batchingKey, toExecute, tasksSummary);
             }
         }

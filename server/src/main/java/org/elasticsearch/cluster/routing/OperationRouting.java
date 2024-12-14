@@ -278,7 +278,7 @@ public class OperationRouting {
 
     protected IndexShardRoutingTable shards(ClusterState clusterState, String index, String id, String routing) {
         // 路由算法
-        //默认情况: shardId = hash(_routing) % shards_nums
+        // 默认情况: shardId = hash(_routing) % shards_nums
         // 如果设置了_routing和_id导致数据倾斜，则通过设置index.routing_partition_size
         // 公式: shardId = (hash(_routing) + hash(_id) % routing_partition_size) % shards_nums
         int shardId = generateShardId(indexMetadata(clusterState, index), id, routing);
@@ -317,6 +317,7 @@ public class OperationRouting {
 
         // we don't use IMD#getNumberOfShards since the index might have been shrunk such that we need to use the size
         // of original index to hash documents
+        // indexMetadata.getRoutingNumShards只包含主分片
         return Math.floorMod(hash, indexMetadata.getRoutingNumShards()) / indexMetadata.getRoutingFactor();
     }
 

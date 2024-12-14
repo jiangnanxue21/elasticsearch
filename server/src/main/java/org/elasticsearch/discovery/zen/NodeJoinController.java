@@ -171,8 +171,10 @@ public class NodeJoinController {
      * Note: doesn't do any validation. This should have been done before.
      */
     public synchronized void handleJoinRequest(final DiscoveryNode node, final MembershipAction.JoinCallback callback) {
+        // 将node和callback作为k-v加入到选举上下文对象的joinRequestAccumulator这个map中。
         if (electionContext != null) {
             electionContext.addIncomingJoin(node, callback);
+            // 非常重要，去检查是否有足够数量的 node已经连接到本master节点，再决定后续事情..
             checkPendingJoinsAndElectIfNeeded();
         } else {
             masterService.submitStateUpdateTask("zen-disco-node-join",
@@ -184,16 +186,20 @@ public class NodeJoinController {
     /**
      * checks if there is an on going request to become master and if it has enough pending joins. If so, the node will
      * become master via a ClusterState update task.
+     * 1. 被选为主节点的节点，joinThread会先check一次
+     * 2. 当其他node连接到master时，会做一次 check 操作，检查是否有够数量的node上线
      */
     private synchronized void checkPendingJoinsAndElectIfNeeded() {
         assert electionContext != null : "election check requested but no active context";
         final int pendingMasterJoins = electionContext.getPendingMasterJoinsCount();
+        // 判断是否有足够数量的master-eligible连接到本master节点
         if (electionContext.isEnoughPendingJoins(pendingMasterJoins) == false) {
             if (logger.isTraceEnabled()) {
                 logger.trace("not enough joins for election. Got [{}], required [{}]", pendingMasterJoins,
                     electionContext.requiredMasterJoins);
             }
         } else {
+            // 执行到这里，说明已经有足够的master-eligible节点上线了，连接到了master节点
             if (logger.isTraceEnabled()) {
                 logger.trace("have enough joins for election. Got [{}], required [{}]", pendingMasterJoins,
                     electionContext.requiredMasterJoins);
@@ -252,8 +258,8 @@ public class NodeJoinController {
 
         private Map<JoinTaskExecutor.Task, ClusterStateTaskListener> getPendingAsTasks(String reason) {
             Map<JoinTaskExecutor.Task, ClusterStateTaskListener> tasks = new HashMap<>();
-            joinRequestAccumulator.entrySet().stream().forEach(e -> tasks.put(
-                new JoinTaskExecutor.Task(e.getKey(), reason), new JoinTaskListener(e.getValue(), logger)));
+            joinRequestAccumulator.forEach((key, value) -> tasks.put(
+                new JoinTaskExecutor.Task(key, reason), new JoinTaskListener(value, logger)));
             return tasks;
         }
 
@@ -278,8 +284,10 @@ public class NodeJoinController {
             final String source = "zen-disco-elected-as-master ([" + tasks.size() + "] nodes joined)";
 
             // noop listener, the election finished listener determines result
+            // 这里面并没有task的执行逻辑
             tasks.put(JoinTaskExecutor.newBecomeMasterTask(), (source1, e) -> {});
             tasks.put(JoinTaskExecutor.newFinishElectionTask(), electionFinishedListener);
+            // joinTaskExecutor执行完task之后将结果放到tasks的ClusterStateTaskListener
             masterService.submitStateUpdateTasks(source, tasks, ClusterStateTaskConfig.build(Priority.URGENT), joinTaskExecutor);
         }
 

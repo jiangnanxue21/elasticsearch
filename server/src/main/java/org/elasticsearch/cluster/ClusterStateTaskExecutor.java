@@ -67,7 +67,10 @@ public interface ClusterStateTaskExecutor<T> {
      */
     class ClusterTasksResult<T> {
         @Nullable
+        // 执行完任务之后产生的新集群状态
         public final ClusterState resultingState;
+
+        // key：存放原始任务   value：存放任务执行结果
         public final Map<T, TaskResult> executionResults;
 
         /**

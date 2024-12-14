@@ -116,8 +116,12 @@ public class PublishClusterStateAction {
         this.namedWriteableRegistry = namedWriteableRegistry;
         this.incomingClusterStateListener = incomingClusterStateListener;
         this.discoverySettings = discoverySettings;
+
+        // 向通信模块注册：internal:discovery/zen/publish/send 事件的处理器（即：master下发给node clusterState的处理）
         transportService.registerRequestHandler(SEND_ACTION_NAME, ThreadPool.Names.SAME, false, false, BytesTransportRequest::new,
             new SendClusterStateRequestHandler());
+
+        // 向通信模块注册：internal:discovery/zen/publish/commit事件的处理器（即：master向node提交集群状态的处理，即应用上一步发送的clusterState）
         transportService.registerRequestHandler(COMMIT_ACTION_NAME, ThreadPool.Names.SAME, false, false, CommitClusterStateRequest::new,
             new CommitClusterStateRequestHandler());
     }
@@ -414,18 +418,27 @@ public class PublishClusterStateAction {
             } finally {
                 IOUtils.close(in);
             }
+
+            // 上面的大部分逻辑都在是解析出 clusterState 对象..
+
+            // 将解析出来的集群状态交给zenDiscovery->onIncomingClusterState 因为它实现IncomingClusterStateListener
             incomingClusterStateListener.onIncomingClusterState(incomingState);
             lastSeenClusterState = incomingState;
         }
+
+        // 响应给master节点一个ack消息，master端会根据下发后收到的ack数量，来决策下一步commit请求。
         channel.sendResponse(TransportResponse.Empty.INSTANCE);
     }
 
     protected void handleCommitRequest(CommitClusterStateRequest request, final TransportChannel channel) {
+        // 参数1：uuid
+        // 参数2：actionListener封装了发送阶段二commit ack请求的逻辑
         incomingClusterStateListener.onClusterStateCommitted(request.stateUUID, new ActionListener<Void>() {
 
             @Override
             public void onResponse(Void ignore) {
                 try {
+                    // 给master一个ack，master端会根据收到的ack数量来决定本次集群状态是否应用成功
                     // send a response to the master to indicate that this cluster state has been processed post committing it.
                     channel.sendResponse(TransportResponse.Empty.INSTANCE);
                 } catch (Exception e) {

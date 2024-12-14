@@ -227,8 +227,24 @@ public class ClusterService extends AbstractLifecycleComponent {
      * Submits a cluster state update task; unlike {@link #submitStateUpdateTask(String, Object, ClusterStateTaskConfig,
      * ClusterStateTaskExecutor, ClusterStateTaskListener)}, submitted updates will not be batched.
      *
-     * @param source     the source of the cluster state update task
-     * @param updateTask the full context for the cluster state update
+     * ClusterStateTaskConfig，任务配置主要含任务优先级、超时信息的定义
+     * ClusterStateTaskExecutor定义了execute(..) 抽象方法，让实现者完成任务的具体逻辑（定义任务具体逻辑）
+     * ClusterStateTaskListener任务监听器onFailure(e)任务执行失败调用、clusterStateProcessed(..)任务执行完毕调用
+     *
+     * AckedClusterStateTaskListener ack指的是下发应用newState时，普通节点给master的回执
+     *
+     * Example:：
+     *   前端修改mapping => master修改mapping任务 => master执行任务 => 生成new状态 => 下发其它节点 => 等待半数以上master-eligible节点
+     *   2PC
+     *     阶段一 发送配置 ：master知道，已经有足够数量的master-eligible持有newState了 => master下发commit请求
+     *     阶段二 commit
+     *     普通或master-eligible节点收到 commit请求 => 本地应用newState => 应用完毕newState给master commit ack =>
+     *     master收到集群节点总数 - 1 个 commit ack => master就知道整个集群都应用了newState => master也要去应用这个newState
+     *     => 当master也应用完newState之后，回调任务相关联的 AckedClusterStateTaskListener#onAllNodesAcked(null)方法
+     *
+     *
+     * @param source     the source of the cluster state update task 描述任务的源信息
+     * @param updateTask the full context for the cluster state update 要提交的具体的任务，这个任务有多种类封装, 可能是ClusterStateUpdateTask实现对象，也可能是AckedClusterStateUpdateTask对象
      *                   task
      *
      */

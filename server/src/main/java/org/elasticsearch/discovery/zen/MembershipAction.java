@@ -98,6 +98,7 @@ public class MembershipAction {
 
     /**
      * Validates the join request, throwing a failure if it failed.
+     * DISCOVERY_JOIN_VALIDATE_ACTION_NAME是由上面注册的事件处理器
      */
     public void sendValidateJoinRequestBlocking(DiscoveryNode node, ClusterState state, TimeValue timeout) {
         transportService.submitRequest(node, DISCOVERY_JOIN_VALIDATE_ACTION_NAME, new ValidateJoinRequest(state),
@@ -128,7 +129,9 @@ public class MembershipAction {
         }
     }
 
-
+    /**
+     * 该handler为master节点收到普通node发起的joinRequest请求的处理器。
+     */
     private class JoinRequestRequestHandler implements TransportRequestHandler<JoinRequest> {
 
         @Override
@@ -170,7 +173,7 @@ public class MembershipAction {
         public void messageReceived(ValidateJoinRequest request, TransportChannel channel, Task task) throws Exception {
             DiscoveryNode node = localNodeSupplier.get();
             assert node != null : "local node is null";
-            joinValidators.stream().forEach(action -> action.accept(node, request.getState()));
+            joinValidators.forEach(action -> action.accept(node, request.getState()));
             channel.sendResponse(TransportResponse.Empty.INSTANCE);
         }
     }
